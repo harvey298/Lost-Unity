@@ -12,11 +12,19 @@ public class EngineerClass : MonoBehaviour
 
     private GameObject wallPrefab;
 
+    private GameObject LookingAt;
+
+    public Camera cam;
+
     // Start is called before the first frame update
     void Start()
     {
+        
         wallPrefab = Resources.Load<GameObject>(WALL_PREFAB_PATH);
         InvokeRepeating("IncreaseEnergy", 2.0f, 0.3f);
+
+        cam = Camera.main;
+
     }
 
     void Update()
@@ -34,7 +42,7 @@ public class EngineerClass : MonoBehaviour
 
             point_gen.player = this.gameObject;
 
-            GameObject gen = (GameObject)Instantiate(Resources.Load<GameObject>("Engineer/EngineerGenerator"));
+            GameObject gen = Instantiate(Resources.Load<GameObject>("Engineer/EngineerGenerator"));
 
             Vector3 gen_pos = this.gameObject.transform.position;
             gen_pos.y += 2f;
@@ -49,7 +57,7 @@ public class EngineerClass : MonoBehaviour
             for (int i = 0; i < points.Count; i++)
             {
                 Vector3 point = points[i];
-                GameObject wall = (GameObject)Instantiate(wallPrefab);
+                GameObject wall = Instantiate(wallPrefab);
                 wall.transform.position = point;
                 Wall data = wall.GetComponent<Wall>();
                 data.decaying = true;
@@ -59,25 +67,79 @@ public class EngineerClass : MonoBehaviour
             
         }
 
-        // Nanobot Rifle
-        if (Input.GetMouseButtonDown(0))
+        // Sentinel Pulse
+        if (Input.GetKeyDown(KeyCode.LeftShift) && enegery >= 50)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit[] hits = Physics.RaycastAll(ray);
-
-            foreach (RaycastHit hit in hits)
+            Debug.Log("Using pulse");
+            Collider[] hitColliders = Physics.OverlapSphere(cam.transform.position, 50f);
+            Vector3 groundZero = cam.transform.position;
+            foreach (var hitCollider in hitColliders)
             {
-                EnemyLogic logic = hit.collider.gameObject.GetComponent<EnemyLogic>();
-                if (logic != null )
+                var enemy = hitCollider.GetComponent<EnemyLogic>();
+                if (enemy != null)
                 {
-                    logic.health -= damage;
-                    Debug.Log("Dealt Damage");
+                    UnityEngine.AI.NavMeshAgent pathFinder = hitCollider.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                    Vector3 direction = enemy.transform.position - groundZero;
+                    float distance = direction.magnitude;
+
+                    if (distance > pathFinder.stoppingDistance)
+                    {
+                        Vector3 pushVector = direction.normalized * 15f;
+                        pathFinder.velocity += pushVector;
+                    }
+
                 }
-                
             }
+
+            enegery -= 50;
         }
 
+        // Nanobot Rifle
+        if (Input.GetMouseButtonDown(0) && LookingAt != null)
+        {
+            // Destroy the hit object
+            var enemy = LookingAt.GetComponent<EnemyLogic>();
+            if (enemy != null)
+            {
+                enemy.health -= damage;
+                LookingAt = null;
+            }
 
+
+        }
+
+    }
+
+    private void FixedUpdate()
+    {
+        // Get the center of the screen
+        Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
+
+        // Cast a ray from the camera through the center of the screen
+        Ray ray = cam.ScreenPointToRay(screenCenter);
+
+        RaycastHit hit;
+        if (Physics.Raycast(cam.transform.position, cam.transform.forward , out hit))
+        {
+
+            // Debug.DrawRay(ray.origin, ray.direction * 100f, Color.black, 1f);
+
+            // Check if the hit object has a collider
+            if (hit.collider != null && LookingAt != hit.collider.gameObject && hit.collider.gameObject.GetComponent<EnemyLogic>() != null)
+            {
+                // Debug.Log("Looking at something new!");
+                LookingAt = hit.collider.gameObject;
+                // Debug.DrawRay(ray.origin, ray.direction * 100f, Color.green, 60f);
+
+            }
+            else
+            {
+                // Debug.Log(hit.collider.gameObject.name);
+                // Debug.DrawRay(ray.origin, ray.direction * 100f, Color.red, 10f);
+                LookingAt = null;
+            }
+            
+        }
     }
 
     public void IncreaseEnergy()

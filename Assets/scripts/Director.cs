@@ -23,6 +23,14 @@ public enum EnemyTypes
     PhantomPhantom = 160,
 }
 
+/// <summary>
+/// This contains both positive and negative effects ( negative numbers for negative effects, positive numbers for postive effects )
+/// </summary>
+public enum Effects
+{
+
+}
+
 public class Director : MonoBehaviour
 {
 
