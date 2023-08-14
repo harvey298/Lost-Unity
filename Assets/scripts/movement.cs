@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class movement : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public class movement : MonoBehaviour
 
     void Update()
     {
+        // if (!IsOwner) return;
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
@@ -88,6 +90,9 @@ public class movement : MonoBehaviour
         // Apply gravity
         playerVelocity.y += gravity * Time.deltaTime;
         controller.Move(playerVelocity * Time.deltaTime);
+
+        // Update the server
+        // gameObject.GetComponent<PlayerNetworkManager>().SendMovementUpdate(gameObject.transform.position, gameObject.transform.rotation);
     }
 
     void LockCursor()

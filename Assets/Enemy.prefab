@@ -124,7 +124,7 @@ MonoBehaviour:
   type: 0
   EnemyID: 0
   active: 0
-  health: 1
+  health: 20
   director: {fileID: 0}
   body: {fileID: 0}
 --- !u!54 &-8541296112443676999

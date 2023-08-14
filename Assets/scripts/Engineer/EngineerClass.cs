@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class EngineerClass : MonoBehaviour
 {
-    public bool UltimateAvailable = true;
+    private int ultimateCooldownRemaining = 0;
+
+    private int altFireCooldownRemaining = 0;
+
     public int enegery = 100;
     public int damage = 20;
 
@@ -22,9 +25,19 @@ public class EngineerClass : MonoBehaviour
         
         wallPrefab = Resources.Load<GameObject>(WALL_PREFAB_PATH);
         InvokeRepeating("IncreaseEnergy", 2.0f, 0.3f);
+        InvokeRepeating("decrease_cool_downs", 2.0f, 1f);
 
         cam = Camera.main;
 
+    }
+
+    private void decrease_cool_downs()
+    {
+        if (ultimateCooldownRemaining < 0) { ultimateCooldownRemaining = 0;  }
+        if (ultimateCooldownRemaining > 0) { ultimateCooldownRemaining -= 1; }
+
+        if (altFireCooldownRemaining < 0) { altFireCooldownRemaining = 0; }
+        if (altFireCooldownRemaining > 0) { altFireCooldownRemaining -= 1; }
     }
 
     void Update()
@@ -35,8 +48,9 @@ public class EngineerClass : MonoBehaviour
         }
 
         // Fortifcation Protcol
-        if (Input.GetKeyDown(KeyCode.R) && UltimateAvailable && enegery >= 90)
+        if (Input.GetKeyDown(KeyCode.R) && ultimateCooldownRemaining == 0 && enegery >= 90)
         {
+            ultimateCooldownRemaining = 10;
 
             PointGenerator point_gen = new PointGenerator();
 
@@ -49,6 +63,7 @@ public class EngineerClass : MonoBehaviour
             gen.transform.position = gen_pos;
 
             Wall gen_data = gen.GetComponent<Wall>();
+            gen_data.owner = this.gameObject;
             gen_data.generator = true;
             gen_data.decaying = true;
 
@@ -61,6 +76,7 @@ public class EngineerClass : MonoBehaviour
                 wall.transform.position = point;
                 Wall data = wall.GetComponent<Wall>();
                 data.decaying = true;
+                data.owner = this.gameObject;
             }
 
             enegery -= 90;
@@ -70,7 +86,6 @@ public class EngineerClass : MonoBehaviour
         // Sentinel Pulse
         if (Input.GetKeyDown(KeyCode.LeftShift) && enegery >= 50)
         {
-            Debug.Log("Using pulse");
             Collider[] hitColliders = Physics.OverlapSphere(cam.transform.position, 50f);
             Vector3 groundZero = cam.transform.position;
             foreach (var hitCollider in hitColliders)
@@ -82,10 +97,14 @@ public class EngineerClass : MonoBehaviour
                     Vector3 direction = enemy.transform.position - groundZero;
                     float distance = direction.magnitude;
 
-                    if (distance > pathFinder.stoppingDistance)
+                    if (distance <= 15f)
                     {
-                        Vector3 pushVector = direction.normalized * 15f;
-                        pathFinder.velocity += pushVector;
+                     
+                        if (distance > pathFinder.stoppingDistance)
+                        {
+                            Vector3 pushVector = direction.normalized * 10f;
+                            pathFinder.velocity += pushVector;
+                        }
                     }
 
                 }
@@ -105,6 +124,26 @@ public class EngineerClass : MonoBehaviour
                 LookingAt = null;
             }
 
+        }
+
+        // Nanobot Infusion
+        if (Input.GetMouseButtonDown(1) && altFireCooldownRemaining == 0)
+        {
+            if (LookingAt != null)
+            {
+                var player = LookingAt.GetComponent<remote_player>();
+                if (player != null)
+                {
+                    player.gameObject.GetComponent<Player>().effects.Add(Effects.NanoBotInfusion, 30);
+                    altFireCooldownRemaining = 3;
+                    LookingAt = null;
+                }
+
+            } else
+            {
+                altFireCooldownRemaining = 3;
+                this.gameObject.GetComponent<Player>().effects.Add(Effects.NanoBotInfusion, 30);
+            }
 
         }
 
@@ -112,11 +151,9 @@ public class EngineerClass : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Get the center of the screen
-        Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
+        // Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
 
-        // Cast a ray from the camera through the center of the screen
-        Ray ray = cam.ScreenPointToRay(screenCenter);
+        // Ray ray = cam.ScreenPointToRay(screenCenter);
 
         RaycastHit hit;
         if (Physics.Raycast(cam.transform.position, cam.transform.forward , out hit))
@@ -124,7 +161,6 @@ public class EngineerClass : MonoBehaviour
 
             // Debug.DrawRay(ray.origin, ray.direction * 100f, Color.black, 1f);
 
-            // Check if the hit object has a collider
             if (hit.collider != null && LookingAt != hit.collider.gameObject && hit.collider.gameObject.GetComponent<EnemyLogic>() != null)
             {
                 // Debug.Log("Looking at something new!");

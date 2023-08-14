@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Editor/MainMenuEditor.uss?fileID=7433441132597879392&amp;guid=f7c63c67f2a40124d9d977063f5b013c&amp;type=3#MainMenuEditor" />
+    <ui:VisualElement style="flex-grow: 1;">
+        <ui:GroupBox name="Join" style="height: 348px; width: 474px;">
+            <ui:TextField picking-mode="Ignore" label="Server Name:" value="filler text" name="serverInput" style="height: 48px; width: 301px; justify-content: flex-end; flex-direction: row; position: relative; top: 5px; left: 1px;" />
+            <ui:Button text="Connect" parse-escape-sequences="true" display-tooltip-when-elided="true" name="connectbutton" style="height: 62px; width: 323px; position: absolute; top: 273px; left: 63px;" />
+        </ui:GroupBox>
+    </ui:VisualElement>
+</ui:UXML>

@@ -16,10 +16,18 @@ public class EnemyLogic : MonoBehaviour
 
     public GameObject body;
 
+    // Effect, Time remaining
+    public Dictionary<Effects, int> effects = new Dictionary<Effects, int>();
+
     // Start is called before the first frame update
     void Start()
     {
         
+    }
+
+    public void add_effect(Effects effect, int length)
+    {
+        effects.Add(effect, length);
     }
 
     // Update is called once per frame

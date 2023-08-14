@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using Unity.Netcode;
 
 public enum EnemyTypes
 {
@@ -24,11 +25,14 @@ public enum EnemyTypes
 }
 
 /// <summary>
-/// This contains both positive and negative effects ( negative numbers for negative effects, positive numbers for postive effects )
+/// This contains both positive and negative effects ( negative numbers for negative effects (for the player), positive numbers for postive effects )
 /// </summary>
 public enum Effects
 {
-
+    NanoBotInfusion = 1, // Buff friends units (players only) - 30 seconds
+    Subjugate = 2, // Single enemy 50% armor reduction
+    Conquer = 3, // 5% nearby enemy armor reduction
+    Tryant = 4, // Given to EmperorClass when Subjugate/Conquer are active, granting 30% armor increase
 }
 
 public class Director : MonoBehaviour
@@ -49,7 +53,7 @@ public class Director : MonoBehaviour
 
     public Dictionary<int, GameObject> enemies = new Dictionary<int, GameObject>();
 
-    public GameObject player;
+    public List<GameObject> players = new List<GameObject>();
 
     public bool enable = true;
 
@@ -58,14 +62,72 @@ public class Director : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("[Director-Debug]: Reminder that sharing direct memory access is a status access violation! Pointers only!");
         Debug.Log("[Director]: Ready! Let the show begin!");
+
+        getAllPlayers();
+    }
+
+    void getAllPlayers()
+    {
+        UnityEngine.Object[] tempList = GameObject.FindObjectsOfType(typeof(MonoBehaviour));
+
+        foreach (UnityEngine.Object obj in tempList)
+        {
+            
+            // Debug.Log("loop");
+            if (obj is Player)
+            {
+                Player player = (Player)obj;
+                GameObject realObject = player.gameObject;
+
+                Player p = realObject.GetComponent<Player>();
+                if (realObject.hideFlags == HideFlags.None && p != null && !players.Contains(realObject) )
+                {
+                    // Ignore chairman class
+                    if (p.pClass != PlayerClass.Chairman)
+                    {
+                        players.Add(realObject);
+                    }
+                }
+
+            }
+        }
+    }
+
+    private Transform FindBestTarget(Transform MyPosition)
+    {
+        float lowest_distance = float.MaxValue;
+        Transform target = null;
+        foreach (GameObject player in players)
+        {
+            float distance = Vector3.Distance(player.transform.position, MyPosition.position);
+            if (distance < lowest_distance)
+            {
+                target = player.transform;
+            }
+        }
+
+        return target;
     }
 
     // Update is called once per frame
     void Update()
     {
         if (!enable) { return; }
+
+        foreach (GameObject enemy in enemies.Values )
+        {
+            var pathfinder = enemy.GetComponent<Pathfinder>();
+
+            Transform target = FindBestTarget(enemy.transform);
+
+            if (target != null)
+            {
+                pathfinder.target = target;
+            }
+        }
+
+        getAllPlayers(); // Change this to once per stage
 
         // Credit Calculation
         if (credits < maxCredits)
@@ -82,6 +144,8 @@ public class Director : MonoBehaviour
 
                 GameObject enemyEntity = Instantiate(EnemyPrefab); // , transform.position, transform.rotation
 
+                // enemyEntity.GetComponent<NetworkObject>().Spawn();
+
                 var logic = enemyEntity.GetComponent<EnemyLogic>();
 
                 logic.type = (EnemyTypes)enemy;
@@ -91,7 +155,13 @@ public class Director : MonoBehaviour
                 logic.EnemyID = NextId;
 
                 var pathfinder = enemyEntity.GetComponent<Pathfinder>();
-                pathfinder.target = player.transform;
+
+                Transform target = FindBestTarget(enemyEntity.transform);
+
+                if (target != null)
+                {
+                    pathfinder.target = target;
+                }
 
                 enemies.Add(NextId, enemyEntity);
                 
