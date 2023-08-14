@@ -13,7 +13,7 @@ I wasn't happy with how I did things in Bevy and I didn't want to start from scr
 ## Player Classes
 1. Chairman - Requires networking to be completed (secret class)
 2. Engineer - Almost Completed, needs some models and a few bug fixes, Ability 1 (Medi-Sentry) not complete
-3. Emperor - Working on currently
+3. Emperor - Working on currently, Ultimate complete, Ability 2 almost complete
 4. Mutant - Not Started
 5. Chronowatcher - Not Started
 6. Fighter - Not Started
