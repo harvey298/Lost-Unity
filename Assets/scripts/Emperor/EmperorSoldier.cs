@@ -8,6 +8,8 @@ public class EmperorSoldier : MonoBehaviour
     public int MaxHealth = 5;
     public int Health;
 
+    public int TimeAlive = 0;
+
     public Player owner;
     private Pathfinder pathFiner;
     private Director director;
@@ -18,11 +20,28 @@ public class EmperorSoldier : MonoBehaviour
         pathFiner = this.GetComponent<Pathfinder>();
         director = GameObject.Find("Director").GetComponent<Director>();
         Health = MaxHealth;
+
+        InvokeRepeating("Decay", 2.0f, 1f);
+    }
+
+    private void Decay()
+    {
+        TimeAlive += 1;
+        if (TimeAlive > 30)
+        {
+            Health -= 1;
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (this.Health <=0)
+        {
+            Destroy(this.gameObject);
+            return;
+        }
+
         var ownerPosition = owner.transform.position;
         int closest = int.MaxValue;
         Transform goal = null;

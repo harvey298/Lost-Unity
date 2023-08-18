@@ -8,10 +8,15 @@ public class EmperorClass : MonoBehaviour
 
     private int altFireCooldownRemaining = 0;
 
+    private int Ability2CooldownRemaining = 0;
+
     public int enegery = 100;
     public int damage = 20;
 
+    // Probs bad for naming, but it only effects me, need to change the naming
     const string LEGION = "Emperor/EmperorLegion";
+
+    const string SOLDIER = "Emperor/EmperorPortal";
 
     private GameObject legionPrefab;
 
@@ -38,6 +43,9 @@ public class EmperorClass : MonoBehaviour
 
         if (altFireCooldownRemaining < 0) { altFireCooldownRemaining = 0; }
         if (altFireCooldownRemaining > 0) { altFireCooldownRemaining -= 1; }
+
+        if (Ability2CooldownRemaining < 0) { Ability2CooldownRemaining = 0; }
+        if (Ability2CooldownRemaining > 0) { Ability2CooldownRemaining -= 1; }
     }
 
     void Update()
@@ -87,7 +95,7 @@ public class EmperorClass : MonoBehaviour
                 thisPlayer.add_effect(Effects.Tryant, 30);
             }
 
-            // Spawn the legion
+            // Spawn the legion (the wall)
             Vector3 spawnPos = this.transform.position;
             spawnPos.z += 1;
 
@@ -105,32 +113,13 @@ public class EmperorClass : MonoBehaviour
 
         }
 
-        // Sentinel Pulse
-        if (Input.GetKeyDown(KeyCode.LeftShift) && enegery >= 50)
+        // Imperial Legion (soliders)
+        if (Input.GetKeyDown(KeyCode.LeftShift) && enegery >= 50 && Ability2CooldownRemaining == 0)
         {
-            Collider[] hitColliders = Physics.OverlapSphere(cam.transform.position, 50f);
-            Vector3 groundZero = cam.transform.position;
-            foreach (var hitCollider in hitColliders)
-            {
-                var enemy = hitCollider.GetComponent<EnemyLogic>();
-                if (enemy != null)
-                {
-                    UnityEngine.AI.NavMeshAgent pathFinder = hitCollider.GetComponent<UnityEngine.AI.NavMeshAgent>();
-                    Vector3 direction = enemy.transform.position - groundZero;
-                    float distance = direction.magnitude;
-
-                    if (distance <= 15f)
-                    {
-
-                        if (distance > pathFinder.stoppingDistance)
-                        {
-                            Vector3 pushVector = direction.normalized * 10f;
-                            pathFinder.velocity += pushVector;
-                        }
-                    }
-
-                }
-            }
+            var soliderSpawner = Instantiate(Resources.Load<GameObject>(SOLDIER));
+            soliderSpawner.transform.position = this.transform.position;
+            soliderSpawner.GetComponent<EmperorLegionPortal>().owner = this.GetComponent<Player>(); // TODO: Cache the player
+            Ability2CooldownRemaining = 35; // TODO: Increase this?
 
             // enegery -= 50;
         }
